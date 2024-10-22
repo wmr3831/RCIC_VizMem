@@ -1,0 +1,50 @@
+---
+title: "rcAnalyses"
+author: "Willow Rose (ejb3831@rit.edu)"
+date: "2023-10-12"
+output: html_document
+---
+
+References:
+Ron Dotsch (2016). rcicr: Reverse correlation image classification toolbox. 
+R package version 0.3.4.1.
+
+Setup
+```{r setup, include=FALSE}
+# Load libraries
+knitr::opts_chunk$set(echo = TRUE)
+library(rcicr)
+library(dplyr)
+
+# Set Parameters
+# @param datPath path to data file
+# @param rDatPath path to rdata file generated with stimuli generation
+datPath <- './data/raw/taskDat.csv'
+rDatPath <- './img/stim_seed_1974_time_Oct_12_2023_11_47.Rdata'
+```
+
+
+Load data
+```{r loadData}
+# Load data
+rcdata <- read.csv(datPath)
+
+# Display data
+head(rcdata)
+```
+
+Generate classification images
+```{r genCIs, echo=FALSE}
+
+# Generate individual cis by participant
+batchGenerateCI2IFC(data = rcdata, by = 'id', stimuli = 'trial', responses = 'response', baseimage = 'base', rdata = rDatPath, antiCI = F)
+
+# Generate individual anti-cis by participant
+batchGenerateCI2IFC(data = rcdata, by = 'id', stimuli = 'trial', responses = 'response', baseimage = 'base', rdata = rDatPath, antiCI = T)
+
+# Generate group ci
+generateCI2IFC(stimuli = rcdata$trial, responses = rcdata$response, baseimage = 'base', rdata = rDatPath, antiCI = F)
+
+# Generate group anti-ci
+generateCI2IFC(stimuli = rcdata$trial, responses = rcdata$response, baseimage = 'base', rdata = rDatPath, antiCI = T)
+```
