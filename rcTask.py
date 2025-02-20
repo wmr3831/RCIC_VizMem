@@ -43,7 +43,8 @@ chdir(mainDir)
 # Set parameters
 stimDir = './img/'
 datFile = './data/raw/taskDat.csv'
-
+obs = 15
+tests = 3
 # PsychoPy experiment setup ----------------------------------------
 
 # Set PID if args included, otherwise create dialogue box to get PID
@@ -54,7 +55,7 @@ else:
     while not validPid:
         pidDlg = gui.Dlg()
         pidDlg.addField('PID:')
-        pid = pidDlg.show()
+        pid = int(pidDlg.show()[0])
         if pidDlg.OK:
             validPid = True
 
@@ -84,6 +85,24 @@ mouse = event.Mouse()
 
 # Load all .png files in stimulus directory
 stim = [f for f in listdir (stimulidir) if '.png' in f]
+oridict = {i+1: {} for i in range(obs)}
+invdict = {i+1: {} for i in range(obs)}
+
+
+
+for item in stim:
+    splt = item.split('_')
+    stimnum = int(splt[0][4:])
+    itemnum = int(splt[2])
+    noise = splt[3][:3]
+    if(noise == 'ori'):
+        oridict[stimnum][itemnum] = item
+    else:
+        invdict[stimnum][itemnum] = item
+
+
+
+    
 
 stop = './Stop.jpg'
 
@@ -97,9 +116,9 @@ intro.setAutoDraw(False)
 
 
 # Determine number of trials by dividing the number of stimuli loaded by 2
-ntrials = int(len(stim) / 2)
+ntrials = int(len(stim) / (2 * obs) )
 
-size = 0.7
+size = 1
 # Set left and right stimulus location in gui window
 stimLeft = visual.ImageStim(win, pos=(-0.5, -0.2))
 stimRight = visual.ImageStim(win, pos=(0.5, -0.2))
@@ -116,7 +135,7 @@ reminderInstr = visual.TextStim(win, text=instruction, pos=(0, 0.7), wrapWidth=2
 reminderInstr.setAutoDraw(True)
 
 # Randomize stimulus presentation order
-stimOrder = np.random.permutation(range(ntrials))
+
 
 # Generate random participant ID not already present in data file
 #dataf = pandas.read_csv(datafile)
@@ -125,96 +144,105 @@ stimOrder = np.random.permutation(range(ntrials))
 
 # Experiment -----------------------------------------------------
 
-# @param tNum  current trial number
-tNum = 0
+
 
 # Iterate through stimulus list to, should have 1 trial per stimulus pair
-for trial in stimOrder:
+for i in range(tests):
+    curob = ((pid + i) % obs) + 1
+    print(curob)
+    stimOrder = np.random.permutation(range(ntrials))
+    print(stimOrder)
+    # @param tNum  current trial number
+    tNum = 0
     
-    # Increase trial count
-    tNum+=1
-    
-    # Set original and inverted stimulus image which are stored sequentially in stim list
-    oristimf = stim[(trial * 2)+1]
-    invstimf = stim[(trial * 2)]
-    
-    # Randomize which side original/inverted stimulus appear on
-    if random.randint(0,1) == 0:
-        stimleftf = oristimf
-        stimrightf = invstimf
-    else:
-        stimleftf = invstimf
-        stimrightf = oristimf
-    
-    # Set left stimulus image
-    stimLeft.setImage(stimulidir + stimleftf)
-    stimLeft.draw()
-    
-    # Set right stimulus image
-    stimRight.setImage(stimulidir + stimrightf)
-    stimRight.draw()
-    
-    # Update gui window
-    win.flip()
-    
-    # @param stimulus selected
-    selected = False
-    
-    # Wait on input while stimulus not selected
-    while not selected:
+    for trial in stimOrder:
         
-        # Check for key events
-        for key in event.getKeys():
-                if key in ['escape', 'q']: # if q or escape quit program
-                    core.quit() 
-                elif key in ['1', 'e']: # if 1 or e select left stimulus
-                    selected = 'left'
-                    selectedstim = stimleftf
-                elif key in ['0', 'i']: # if 0 or i select right stimulus
-                    selected = 'right'
-                    selectedstim = stimrightf
+        # Increase trial count
+        tNum+=1
+        print(trial)
+        # Set original and inverted stimulus image which are stored sequentially in stim list
+        oristimf = oridict[curob][trial+1]
+        invstimf = invdict[curob][trial+1]
+        print(oristimf)
+        print(invstimf)
         
-        # Check for mouse events
-        if mouse.isPressedIn(stimLeft): # if left stimulus clicked select left stimulus
-            selected = 'left'
-            selectedstim = stimleftf
-        elif mouse.isPressedIn(stimRight): # if right stimulus clicked select right stimulus
-            selected = 'right'
-            selectedstim = stimrightf
-    
-    # If stimulus selected, lower opacity of unselected stimulus
-    if selected == 'left':
-        stimRight.opacity = 0.25
-    elif selected == 'right':
-        stimLeft.opacity = 0.25
-    stimRight.draw()
-    stimLeft.draw()
-    
-    # Rerturn opacity to normal without drawing to setup next trial
-    stimLeft.opacity = 1.0
-    stimRight.opacity = 1.0
-    
-    # Update gui window
-    win.flip()
-    
-    # Determine whether original or inverted stimulus was selected
-    if selectedstim == oristimf: # if original selected, response = 1
-        response = 1
-    else: # if inverted selected, response = -1
-        response = -1
-    
-    # Wair for mouse press to continue
-    while mouse.getPressed()[0]:
-        core.wait(0.01)
-    
-    # Create dataframe with trial data
-    trialDat = pandas.DataFrame({'id':[pid], 'trial':[tNum], 'stim':[trial+1], 'oristimpath':[oristimf], 'invstimpath':[invstimf], 'response':[response]})
-    
-    # Append trial dataframe to data file
-    trialDat.to_csv(datafile, mode='a', header=False, index=False)
-    
-    # Wait for ITI before next trial
-    core.wait(iti)
+        # Randomize which side original/inverted stimulus appear on
+        if random.randint(0,1) == 0:
+            stimleftf = oristimf
+            stimrightf = invstimf
+        else:
+            stimleftf = invstimf
+            stimrightf = oristimf
+        
+        # Set left stimulus image
+        stimLeft.setImage(stimulidir + stimleftf)
+        stimLeft.draw()
+        
+        # Set right stimulus image
+        stimRight.setImage(stimulidir + stimrightf)
+        stimRight.draw()
+        
+        # Update gui window
+        win.flip()
+        
+        # @param stimulus selected
+        selected = False
+        
+        # Wait on input while stimulus not selected
+        while not selected:
+            
+            # Check for key events
+            for key in event.getKeys():
+                    if key in ['escape', 'q']: # if q or escape quit program
+                        core.quit() 
+                    elif key in ['1', 'e']: # if 1 or e select left stimulus
+                        selected = 'left'
+                        selectedstim = stimleftf
+                    elif key in ['0', 'i']: # if 0 or i select right stimulus
+                        selected = 'right'
+                        selectedstim = stimrightf
+            
+            # Check for mouse events
+            if mouse.isPressedIn(stimLeft): # if left stimulus clicked select left stimulus
+                selected = 'left'
+                selectedstim = stimleftf
+            elif mouse.isPressedIn(stimRight): # if right stimulus clicked select right stimulus
+                selected = 'right'
+                selectedstim = stimrightf
+        
+        # If stimulus selected, lower opacity of unselected stimulus
+        if selected == 'left':
+            stimRight.opacity = 0.25
+        elif selected == 'right':
+            stimLeft.opacity = 0.25
+        stimRight.draw()
+        stimLeft.draw()
+        
+        # Rerturn opacity to normal without drawing to setup next trial
+        stimLeft.opacity = 1.0
+        stimRight.opacity = 1.0
+        
+        # Update gui window
+        win.flip()
+        
+        # Determine whether original or inverted stimulus was selected
+        if selectedstim == oristimf: # if original selected, response = 1
+            response = 1
+        else: # if inverted selected, response = -1
+            response = -1
+        
+        # Wait for mouse press to continue
+        while mouse.getPressed()[0]:
+            core.wait(0.01)
+        
+        # Create dataframe with trial data
+        trialDat = pandas.DataFrame({'id':[pid], 'trial':[tNum], 'stim':[trial+1], 'oristimpath':[oristimf], 'invstimpath':[invstimf], 'response':[response]})
+        
+        # Append trial dataframe to data file
+        trialDat.to_csv(datafile, mode='a', header=False, index=False)
+        
+        # Wait for ITI before next trial
+        core.wait(iti)
 
 # Experiment end    
    
