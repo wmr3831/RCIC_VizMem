@@ -1,1 +1,7 @@
 id,trial,stim,oristimpath,invstimpath,response
+0,1,47,stim1_1729_00046_ori.png,stim1_1729_00046_inv.png,-1
+1,1,53,stim1_1729_00053_ori.png,stim1_1729_00053_inv.png,1
+1,2,76,stim1_1729_00076_ori.png,stim1_1729_00076_inv.png,-1
+1,1,82,stim2_1729_00082_ori.png,stim2_1729_00082_inv.png,-1
+1,2,71,stim2_1729_00071_ori.png,stim2_1729_00071_inv.png,1
+0,1,48,stim1_1729_00048_ori.png,stim1_1729_00048_inv.png,-1

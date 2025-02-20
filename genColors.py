@@ -1,8 +1,12 @@
 from skimage import io, color, util
 import numpy as np
 import math
+import os
+from pathlib import Path
 
-path = 'stimuli/baseImgs/shape01.png'
+path = './stimuli/baseImgs/shape01.png'
+stimDir = './colorStim/'
+imgDir = './stimuli/baseImgs/'
 
 
 
@@ -29,10 +33,31 @@ def rotate_image(img, angle):
     # Convert back to RGB and scale:
     img = util.img_as_ubyte(color.lab2rgb(lab))
     return img
-rgb = io.imread(path)[:,:,:3]
+
+def load_images_from_directory(directory):
+    images = []
+    names = []
+    for filename in os.listdir(directory):
+        if filename.endswith((".png")): 
+            names.append(filename)
+            filepath = os.path.join(directory, filename)
+            image = io.imread(filepath)[:,:,:3]
+            images.append(image)
+    return [images, names]
 
 
+read = load_images_from_directory(imgDir)
+stimuli = read[0]
+names = read[1]
 
-test = rotate_image(rgb, 180)
-io.imshow(test)
-io.show()
+for stim in range(0, len(stimuli)):
+    for degree in range(0, 360):
+        temp = rotate_image(stimuli[stim], degree)
+        outAppend = names[stim].split('.')[0] + "_angle_" + str(degree) + ".png"
+        io.imsave(os.path.join(stimDir, outAppend), temp)
+        
+        
+#rgb = io.imread(path)[:,:,:3]
+#test = rotate_image(rgb, 180)
+#io.imshow(test)
+#io.show()
