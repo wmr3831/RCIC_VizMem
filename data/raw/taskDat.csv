@@ -5,3 +5,8 @@ id,trial,stim,oristimpath,invstimpath,response
 1,1,82,stim2_1729_00082_ori.png,stim2_1729_00082_inv.png,-1
 1,2,71,stim2_1729_00071_ori.png,stim2_1729_00071_inv.png,1
 0,1,48,stim1_1729_00048_ori.png,stim1_1729_00048_inv.png,-1
+0,1,4,stim_4.jpg,stim_4.jpg,-1
+0,2,15,stim_15.jpg,stim_15.jpg,-1
+0,3,3,stim_3.jpg,stim_3.jpg,-1
+0,1,7,stim_7.jpg,stim_7.jpg,-1
+0,2,12,stim_12.jpg,stim_12.jpg,-1

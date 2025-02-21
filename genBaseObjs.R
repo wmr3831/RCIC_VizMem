@@ -29,12 +29,12 @@ library(webmorphR)
 library(dplyr)
 
 # Set parameters
-imDir <- "./stimuli/baseImgs"
-writeDir <- "./grayStim"
+imDir <- "./stimuli/shapeSwap"
+writeDir <- "./grayStim/shapeSwap"
 outName <- "base"
 imForm <- "jpg"
 imDims <- 512
-
+# 
 # Load image to be formated
 files <-read_stim(imDir)
 
