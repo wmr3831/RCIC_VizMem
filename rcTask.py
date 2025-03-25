@@ -35,6 +35,7 @@ import random
 import numpy as np
 import pandas
 import sys
+import sqlite3
 
 # Set working directory
 mainDir = path.dirname(path.abspath(sys.argv[0]))
@@ -42,7 +43,7 @@ chdir(mainDir)
 
 # Set parameters
 stimDir = './img/'
-datFile = './data/raw/taskDat.csv'
+datFile = 'participant_data.db'
 obs = 15
 tests = 3
 # PsychoPy experiment setup ----------------------------------------
@@ -80,7 +81,7 @@ monitors = get_monitors()
 screenRes = (monitors[0].width, monitors[0].height)
 
 # Create gui window and mouse listener
-win = visual.Window(fullscr=True, size = screenRes)
+win = visual.Window(fullscr=True, size = screenRes, color=(-1,-1,-1))
 mouse = event.Mouse()
 
 # Load all .png files in stimulus directory
@@ -108,7 +109,7 @@ stop = './Stop.jpg'
 
 
 # Wait for instructions
-intro = visual.TextStim(win, text='Please wait for instructions from the experimenter.', autoDraw=True)
+intro = visual.TextStim(win, text='The following task will present you with two images.\n\nClick the image which is closest to the object as you remember it.\n\nIn cases where neither object looks particularly close, still do your best to choose the one closest to the object in memory.\n\nThere are 300 trials.', autoDraw=True)
 
 win.flip()
 event.waitKeys(keyList=['return', 'q'])
@@ -118,10 +119,10 @@ intro.setAutoDraw(False)
 # Determine number of trials by dividing the number of stimuli loaded by 2
 ntrials = int(len(stim) / (2 * obs) )
 
-size = 1
+size = .7
 # Set left and right stimulus location in gui window
-stimLeft = visual.ImageStim(win, pos=(-0.5, -0.2))
-stimRight = visual.ImageStim(win, pos=(0.5, -0.2))
+stimLeft = visual.ImageStim(win, pos=(-0.5, -0.2), size=(1,1.5))
+stimRight = visual.ImageStim(win, pos=(0.5, -0.2), size=(1,1.5))
 
 stimLeft.size *= size
 stimRight.size *= size
@@ -129,7 +130,7 @@ stimRight.size *= size
 stopImg = visual.ImageStim(win, image=stop)
 
 # Set instruction text location in gui window
-reminderInstr = visual.TextStim(win, text=instruction, pos=(0, 0.7), wrapWidth=2)
+reminderInstr = visual.TextStim(win, pos=(0, 0.7), wrapWidth=2)
 
 # Autodraw instructions
 reminderInstr.setAutoDraw(True)
@@ -149,22 +150,23 @@ reminderInstr.setAutoDraw(True)
 # Iterate through stimulus list to, should have 1 trial per stimulus pair
 for i in range(tests):
     curob = ((pid + i) % obs) + 1
-    print(curob)
+    
     stimOrder = np.random.permutation(range(ntrials))
-    print(stimOrder)
+    
     # @param tNum  current trial number
     tNum = 0
-    
+    ndict = {1:'first', 2:'second', 3:'third'}
+    reminderInstr.setText("Which of these objects most resembles the " + ndict[i+1] +" object you were shown today?")
+    print(stimOrder)
     for trial in stimOrder:
         
         # Increase trial count
         tNum+=1
-        print(trial)
+        
         # Set original and inverted stimulus image which are stored sequentially in stim list
         oristimf = oridict[curob][trial+1]
         invstimf = invdict[curob][trial+1]
-        print(oristimf)
-        print(invstimf)
+        
         
         # Randomize which side original/inverted stimulus appear on
         if random.randint(0,1) == 0:
@@ -236,21 +238,21 @@ for i in range(tests):
             core.wait(0.01)
         
         # Create dataframe with trial data
-        trialDat = pandas.DataFrame({'id':[pid], 'trial':[tNum], 'stim':[trial+1], 'oristimpath':[oristimf], 'invstimpath':[invstimf], 'response':[response]})
+        trialDat = pandas.DataFrame({'pid':[pid], 'trial':[tNum], 'stim':[trial+1], 'obj':[curob], 'oristimpath':[oristimf], 'invstimpath':[invstimf], 'response':[response]})
         
         # Append trial dataframe to data file
-        trialDat.to_csv(datafile, mode='a', header=False, index=False)
+        conn = sqlite3.connect(datFile)
+        cursor = conn.cursor()
+        print(oristimf)
+        cursor.execute("INSERT INTO rc_data (pid, trial, obj, stim, oristimpath, invstimpath, response) VALUES (?,?,?,?,?,?,?)", (int(trialDat['pid']), int(trialDat['trial']), int(trialDat['obj']), int(trialDat['stim']), str(oristimf), str(invstimf), int(trialDat['response'])))
         
+        conn.commit()
+        conn.close()
         # Wait for ITI before next trial
         core.wait(iti)
 
 # Experiment end    
    
-reminderInstr.setAutoDraw(False)
-stopImg.draw()
-win.flip()
-
-event.waitKeys(keyList=['return', 'q'])
 
 # Close gui window    
 win.close() 

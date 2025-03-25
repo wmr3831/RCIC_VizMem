@@ -1,0 +1,34 @@
+---
+title: "Data_Analysis"
+output: html_document
+---
+
+```{r configuration}
+
+library(RSQLite)
+db_path = 'participant_data.db'
+
+```
+
+```{r view_tables}
+db <- dbConnect(RSQLite::SQLite(), db_path)
+dbListTables(db)
+#earthquakes <- dbGetQuery(db, 'SELECT * FROM earthquake')
+p_log <- dbGetQuery(db, 'SELECT * FROM p_log')
+rc_data <- dbGetQuery(db, 'SELECT * FROM rc_data')
+fc_data <- dbGetQuery(db, 'SELECT * FROM debrief')
+color_data <- dbGetQuery(db, 'SELECT * FROM color_data')
+debrief <- dbGetQuery(db, 'SELECT * FROM debrief')
+
+head(p_log)
+head(rc_data)
+head(fc_data)
+head(color_data)
+head(debrief)
+
+
+dbDisconnect(db)
+
+
+
+```

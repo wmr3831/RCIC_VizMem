@@ -1,0 +1,3 @@
+[submodule "PsychopyResolutionWR"]
+	path = PsychopyResolutionWR
+	url = https://github.com/colinquirk/PsychopyResolutionWR.git

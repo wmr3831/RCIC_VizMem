@@ -7,6 +7,7 @@ from math import floor, ceil
 import numpy as np
 import pandas
 import sys
+import sqlite3
 
 # Set working directory
 mainDir = path.dirname(path.abspath(sys.argv[0]))
@@ -14,7 +15,7 @@ chdir(mainDir)
 
 # Set parameters
 stimDir = './grayStim/'
-datFile = './data/raw/taskDat.csv'
+datFile = 'participant_data.db'
 
 
 if len(sys.argv) > 1:
@@ -31,7 +32,7 @@ else:
 # Setup info dictionary
 # @param Instruction text prompt to be displayed
 # @param ITI inter-task interval duration
-info = {'Instruction':'Which of these faces most resembles the face of a person you would imagine being affected by climate change?', 'Stimuli folder':stimDir, 'Data file':datFile,'ITI':0.5}
+info = {'Instruction':'Click the object which you were shown earlier.', 'Stimuli folder':stimDir, 'Data file':datFile,'ITI':0.5}
 
 # Setup PsychoPy gui parameters
 # @param title window title
@@ -49,7 +50,7 @@ monitors = get_monitors()
 screenRes = (monitors[0].width, monitors[0].height)
 
 # Create gui window and mouse listener
-win = visual.Window(fullscr=True, size = screenRes)
+win = visual.Window(fullscr=True, size = screenRes, color=(-1,-1,-1))
 mouse = event.Mouse()
 
 baseimgs = listdir (stimulidir + "baseImgs/")
@@ -93,7 +94,7 @@ stop = './Stop.jpg'
 
 
 # Wait for instructions
-intro = visual.TextStim(win, text='Please wait for instructions from the experimenter.', autoDraw=True)
+intro = visual.TextStim(win, text='The following task will present you with two objects.\n\nClick the object which you were shown earlier.', autoDraw=True)
 
 win.flip()
 event.waitKeys(keyList=['return', 'q'])
@@ -102,10 +103,10 @@ intro.setAutoDraw(False)
 
 # Determine number of trials by dividing the number of stimuli loaded by 2
 
-size = 1
+size = .7
 # Set left and right stimulus location in gui window
-stimLeft = visual.ImageStim(win, pos=(-0.5, -0.2))
-stimRight = visual.ImageStim(win, pos=(0.5, -0.2))
+stimLeft = visual.ImageStim(win, pos=(-0.5, -0.2), size=(1,1.5))
+stimRight = visual.ImageStim(win, pos=(0.5, -0.2), size=(1,1.5))
 
 stimLeft.size *= size
 stimRight.size *= size
@@ -130,9 +131,11 @@ for trial in stimOrder:
     if trial in rtrials:
         foil = rotatedir[trial+1]
         fpath = "rotated/"
+        dtype = 1
     else:
         foil = swapdir[trial+1]
         fpath = "shapeSwap/"
+        dtype = 0
     
     
     # Randomize which side original/inverted stimulus appear on
@@ -205,10 +208,15 @@ for trial in stimOrder:
         core.wait(0.01)
     
     # Create dataframe with trial data
-    trialDat = pandas.DataFrame({'id':[pid], 'trial':[tNum], 'stim':[trial+1], 'testimpath':[test], 'foilimpath':[foil], 'response':[response]})
+    trialDat = pandas.DataFrame({'pid':[pid], 'trial':[tNum], 'obj':[trial+1], 'dtype':[dtype], 'response':[response]})
+    conn = sqlite3.connect(datFile)
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO fc_data (pid, trial, obj, dtype, response) VALUES (?,?,?,?,?)", (int(trialDat['pid']), int(trialDat['trial']), int(trialDat['obj']), int(trialDat['dtype']), str(trialDat['response'])))
     
+    conn.commit()
+    conn.close()
     # Append trial dataframe to data file
-    trialDat.to_csv(datafile, mode='a', header=False, index=False)
     
     # Wait for ITI before next trial
     core.wait(iti)
+win.close()
